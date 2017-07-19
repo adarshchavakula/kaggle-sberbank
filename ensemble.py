@@ -15,7 +15,7 @@ from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor as KNN
 import matplotlib.pyplot as plt
 import seaborn as sns
-np.random.seed(76352)
+np.random.seed(76352) # Make the keras neural networks reproducible
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -36,6 +36,15 @@ def RMSE(ypred, ytrue):
     return np.sqrt(1./len(ypred) * np.sum(np.square(ypred - ytrue)))
 
 class LinearEnsemble:
+    '''
+    Class to create a linear ensemble object with a scikit-learn like API
+    Methods:
+    fit(x,y)
+        fit the bagger model on feature array x and labels y.
+
+    predict(test)
+        Make predictions for new test data based on what the model learned in the fit procedure. 
+    '''
     def __init__(self, model_list, weights):
         self.model_list = model_list
         self.weights = weights
@@ -69,7 +78,7 @@ class bagger:
     fit(x,y)
         fit the bagger model on feature array x and labels y.
 
-    predict_proba(test)
+    predict(test)
         Make predictions for new test data based on what the model learned in the fit procedure. 
     '''
     def __init__(self,clf,num_bags=10,bag_fraction=0.75):
@@ -95,6 +104,9 @@ class bagger:
         return np.ravel(avg_pred)
 
 def feature_engg(train, test):
+    '''
+    The mega function to do all the cleaning up
+    '''
     train['train_test_ind'] = 0
     test['train_test_ind'] = 1
 
@@ -330,6 +342,7 @@ def cross_validate(model, x, y, folds=5, runs=1):
 
 def Blender(model_list, data, labels, holdout_fraction = 0.2, repeats = 1):
     """
+    WARNING - POTENTIAL DATA LEAK / OVERFITTING!!
     Fit base models on training data and estimate best blend on hold-outs. Repeat and average using different random seeds. Uses Lasso.
     :param dict model_list: dictionary of models to be blended. Models need to be scikit or XGB. No Deep learning at the moment :(
     :param array data: training data
