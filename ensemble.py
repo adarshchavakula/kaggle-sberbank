@@ -28,6 +28,7 @@ train_path = "~/Documents/Kaggle/Sberbank/train.csv"
 test_path = "~/Documents/Kaggle/Sberbank/test.csv"
 macro_path = "~/Documents/Kaggle/Sberbank/macro.csv"
 
+# Cost Functions
 
 def RMSLE(ypred, ytrue):
     return np.sqrt(1./len(ypred) * np.sum(np.square(np.log(ypred+1) - np.log(ytrue+1))))
@@ -105,7 +106,7 @@ class bagger:
 
 def feature_engg(train, test):
     '''
-    The mega function to do all the cleaning up
+    The mega function to do all the cleaning up. Very specific to this particular dataset (Sberbank Russian Housing) and not for re-use.
     '''
     train['train_test_ind'] = 0
     test['train_test_ind'] = 1
@@ -246,16 +247,19 @@ def feature_engg(train, test):
 
     return xtrain, y , xtest, test_id
 
+# find price per sq ft and divide further by 1000
 def price_per_sq_ft(x,y):
     area = np.array(x['full_sq'])
     ppsqft = y/1000/area
     return ppsqft
 
+# inverse - find price given price per sq ft
 def total_price(x,ppsqft):
     area = np.ravel(x[:,0])
     total_price = ppsqft * 1000 * area
     return total_price
 
+# function to one-hot-encode all categorical variables in the given dataset
 def one_hot(x):
     '''
     # Function to one-hot-encode categorical variables.
@@ -299,6 +303,11 @@ def read_test_data(path, macro_file):
     return xtest
 
 def cross_validate(model, x, y, folds=5, runs=1):
+    '''
+    Function for the cross-validation of the models.
+    --- Specific to this competition and dataset and not for recycling ---
+    model = scikit models / models with scikit-like APIs like XGBoost or Keras or custom built model ensembles
+    '''
     ypred = np.zeros((len(y),runs))
     fold_rmsle = np.zeros((runs,folds))
     r=0
@@ -342,7 +351,7 @@ def cross_validate(model, x, y, folds=5, runs=1):
 
 def Blender(model_list, data, labels, holdout_fraction = 0.2, repeats = 1):
     """
-    WARNING - POTENTIAL DATA LEAK / OVERFITTING!!
+    ------- WARNING - POTENTIAL DATA LEAK / OVERFITTING!! - SMALL DATASET WITH VERY SIMILAR DATA POINTS--------
     Fit base models on training data and estimate best blend on hold-outs. Repeat and average using different random seeds. Uses Lasso.
     :param dict model_list: dictionary of models to be blended. Models need to be scikit or XGB. No Deep learning at the moment :(
     :param array data: training data
@@ -377,6 +386,10 @@ def Blender(model_list, data, labels, holdout_fraction = 0.2, repeats = 1):
     print(RMSE_table)
 
 def StackOOBMaker(train, y, test, base_models, folds=5, repeats=1):
+    '''
+    Function for stacking up ML models.
+    --------- WARNING - POTENTIAL DATA LEAK / OVERFITTING ------------
+    '''
     train, test = np.array(train), np.array(test)
     train_oobs = pd.DataFrame(data=np.zeros([len(y), len(base_models)]), columns=list(base_models))
     for r in range(repeats):
@@ -413,7 +426,7 @@ def train_and_predict(model, train, y, test, test_id, submission_file_name = 'xg
     return
 
 def NeuralNetModel():
-    # create model
+    # KERAS MODEL STRUCTURE FOR KERAS SCIKIT LEARN INTERFACE
     input_feats = 333#-1 # The -1 is to account for ID, which is dropped for NN but is kept for XGb
     hidden_layer_nodes = 10
     h1 = hidden_layer_nodes
